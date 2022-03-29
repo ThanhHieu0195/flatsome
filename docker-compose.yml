@@ -1,0 +1,52 @@
+version: "3.0"
+services:
+  flatsomeweb:
+    image: flatsomeweb
+    build: docker/nginx
+    ports:
+      - 8080:81
+    volumes:
+      - ./themes/flatsome:/var/www/html/project/wp-content/themes/flatsome:rw
+      - ./themes/flatsome-child:/var/www/html/project/wp-content/themes/flatsome-child:rw
+      - ./wp-config.php:/var/www/html/project/wp-config.php
+      - shared:/var/www/html/project
+    networks:
+      - app2-network
+    depends_on:
+      - flatsomephp
+      - flatsomedb
+  flatsomephp:
+    image: flatsomephp
+    build: docker/php
+    volumes:
+      - ./themes/flatsome:/var/www/html/project/wp-content/themes/flatsome:rw
+      - ./themes/flatsome-child:/var/www/html/project/wp-content/themes/flatsome-child:rw
+      - ./wp-config.php:/var/www/html/project/wp-config.php
+      - shared:/var/www/html/project
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app2-network
+    ports:
+      - 8036:3306
+  flatsomedb:
+    image: flatsomedb
+    build: docker/db
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - ./docker/data/mysql:/var/lib/mysql
+    networks:
+      - app2-network
+    environment:
+      - MYSQL_ROOT_PASSWORD=p@ssw0rd123
+  flatsomeadmin:
+    image: adminer
+    restart: always
+    networks:
+      - app2-network
+    ports:
+      - 8081:8080
+networks:
+  app2-network:
+    driver: bridge
+volumes:
+  shared:
